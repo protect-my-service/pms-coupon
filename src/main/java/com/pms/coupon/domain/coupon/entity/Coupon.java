@@ -56,6 +56,10 @@ public class Coupon {
         return new Coupon(name, totalQuantity, issueStartDate, issueEndDate);
     }
 
+    public void increaseIssuedQuantity() {
+        this.issuedQuantity += 1;
+    }
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
