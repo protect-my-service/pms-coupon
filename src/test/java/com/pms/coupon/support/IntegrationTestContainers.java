@@ -31,7 +31,8 @@ public abstract class IntegrationTestContainers {
         registry.add("spring.data.redis.host", REDIS::getHost);
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
 
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
+        registry.add("spring.flyway.enabled", () -> "true");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.jpa.open-in-view", () -> "false");
     }
 }
