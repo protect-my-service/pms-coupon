@@ -26,7 +26,6 @@
 | Cache / In-memory Store | Redis 7 |
 | Migration | Flyway |
 | Test Infra | JUnit5 + Testcontainers (PostgreSQL, Redis) |
-| Monitoring | Spring Actuator + Micrometer + Prometheus |
 | Build Tool | Gradle |
 | Container | Docker Compose |
 
