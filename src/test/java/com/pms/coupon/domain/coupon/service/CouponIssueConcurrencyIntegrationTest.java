@@ -27,7 +27,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.pms.coupon.common.exception.BusinessCustomException;
 import com.pms.coupon.common.exception.ResponseCode;
+import com.pms.coupon.common.enums.CouponIssueStatus;
 import com.pms.coupon.domain.coupon.dto.CouponCreateRequest;
+import com.pms.coupon.domain.coupon.dto.CouponIssueResponse;
 import com.pms.coupon.domain.coupon.entity.Coupon;
 import com.pms.coupon.domain.coupon.redis.CouponIssueRedisService;
 import com.pms.coupon.domain.coupon.repository.CouponIssueRepository;
@@ -129,6 +131,34 @@ class CouponIssueConcurrencyIntegrationTest extends IntegrationTestContainers {
         softly.assertThat(result.successCount() + result.alreadyIssuedCount() + result.inProgressCount())
             .isEqualTo(sameMembers.size());
         softly.assertThat(result.unexpectedErrors()).isEmpty();
+        softly.assertThat(issueRows).isEqualTo(1);
+        softly.assertAll();
+    }
+
+    @Test
+    @DisplayName("동일 회원이 같은 쿠폰을 재요청하면 기존 발급 이력 기반으로 성공 응답을 재현한다")
+    void sameMemberRetry_returnsIdempotentSuccessResponse() {
+        Coupon coupon = couponRepository.save(Coupon.create(
+            "idempotent-coupon",
+            10,
+            LocalDateTime.now().minusMinutes(1),
+            LocalDateTime.now().plusMinutes(10)
+        ));
+        Long memberId = memberRepository.save(Member.create("idempotent-member")).getId();
+
+        CouponIssueResponse firstResponse = couponIssueService.issue(coupon.getId(), memberId);
+        CouponIssueResponse secondResponse = couponIssueService.issue(coupon.getId(), memberId);
+
+        long issueRows = couponIssueRepository.findAll().stream()
+            .filter(issue -> Objects.equals(issue.getCouponId(), coupon.getId()))
+            .count();
+
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(firstResponse.status()).isEqualTo(CouponIssueStatus.SUCCESS);
+        softly.assertThat(secondResponse.status()).isEqualTo(CouponIssueStatus.SUCCESS);
+        softly.assertThat(secondResponse.couponId()).isEqualTo(firstResponse.couponId());
+        softly.assertThat(secondResponse.memberId()).isEqualTo(firstResponse.memberId());
+        softly.assertThat(secondResponse.issuedDate()).isEqualTo(firstResponse.issuedDate());
         softly.assertThat(issueRows).isEqualTo(1);
         softly.assertAll();
     }
