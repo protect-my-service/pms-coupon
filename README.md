@@ -8,8 +8,8 @@
 - [2. 실행 방법](#2-실행-방법)
 - [3. 핵심 도메인 및 API](#3-핵심-도메인-및-api)
 - [4. 동시성 제어 요약](#4-동시성-제어-요약)
-- [5. 향후 확장 방향](#5-향후-확장-방향)
-- [6. 한계점 및 고려사항](#6-한계점-및-고려사항)
+- [5. 테스트](#5-테스트)
+- [6. 한계점 및 보강 포인트](#6-한계점-및-보강-포인트)
 
 <br>
 
@@ -23,6 +23,8 @@
 | Query Builder | QueryDSL |
 | Database | PostgreSQL 15 |
 | Cache / In-memory Store | Redis 7 |
+| Migration | Flyway |
+| Test Infra | JUnit5 + Testcontainers (PostgreSQL, Redis) |
 | Monitoring | Spring Actuator + Micrometer + Prometheus |
 | Build Tool | Gradle |
 | Container | Docker Compose |
@@ -104,24 +106,36 @@ java -jar build/libs/*.jar
 
 <br>
 
-## 5. 향후 확장 방향
+## 5. 테스트
 
-### TODO
+### 5.1 실행
 
-- [x] 동시성/보상 시나리오 통합 테스트 코드 추가
-- [x] 테스트 데이터 추가(로컬/검증용 시드 데이터)
-- [ ] RabbitMQ 기반 발급 파이프라인 추가
-  - 메시지 발행 -> 메시지 수신 -> 발급 수량 유효성 검증 -> 발급 데이터 저장
-- [ ] 모니터링 구성
-- [ ] 멱등성 키 설계 (후속 보강 예정)
+```bash
+./gradlew test
+```
+
+### 5.2 포함된 검증 시나리오
+
+- 동시 발급 요청 시 `issuedQuantity`가 `totalQuantity`를 초과하지 않는지 검증
+- 동일 회원 동시 요청 시 DB 발급 이력이 1건만 저장되는지 검증
+- 동일 회원 재요청 시 기존 발급 이력을 기반으로 멱등 성공 응답을 반환하는지 검증
+- 쿠폰 생성 커밋 이후 Redis 키 초기화(`AFTER_COMMIT`) 동작 검증
+- Redis 키 유실 상황에서 fallback 초기화 후 발급 가능한지 검증
+
+### 5.3 테스트 인프라
+
+- 통합 테스트는 Testcontainers로 PostgreSQL/Redis를 테스트 런타임에 동적으로 기동합니다.
+- 테스트 DB 스키마/시드 데이터는 Flyway 마이그레이션으로 관리합니다.
+- 테스트 환경 JPA 설정은 `ddl-auto=validate` 기준으로 엔티티-스키마 정합성을 검증합니다.
 
 <br>
 
-## 6. 한계점 및 고려사항
+## 6. 한계점 및 보강 포인트
 
-- 현재 구조는 단일 DB 기준으로 정합성을 우선하므로, 트래픽이 매우 커지면 락 경합으로 처리량 한계가 발생할 수 있습니다.
-- 대규모 트래픽 환경에서는 DB 샤딩(예: couponId/hash 기반) 또는 발급 도메인 분리가 필요할 수 있습니다.
-- Redis는 메모리 기반 저장소이므로 장애/유실 상황을 고려한 재동기화 전략(DB 기준 복구)이 필수입니다.
-- 발급 경로의 병목 지점을 지속적으로 확인하려면 DB 커넥션 사용률, lock wait, Redis latency 모니터링이 필요합니다.
-- 메시지 큐 도입 시 중복 소비/순서 보장/재처리(DLQ) 정책을 함께 설계해야 합니다.
-- 멱등성 키와 재시도 정책이 없으면 네트워크 타임아웃 상황에서 클라이언트 재요청 처리 일관성이 깨질 수 있습니다.
+| 구분 | 현재 한계점 | 보강 방향 |
+|---|---|---|
+| DB 확장성 | 단일 쿠폰 row 비관적 락 경합으로 고트래픽 시 처리량 한계 가능 | 쿠폰 단위 샤딩, 도메인 분리, 비동기 발급 파이프라인 도입 검토 |
+| Redis 장애 대응 | Redis 키 유실/장애 시 카운트 불일치 가능성 | DB 기준 재동기화 배치/관리 API 제공 |
+| 멱등성 범위 | 현재는 `memberId + couponId` 중심의 멱등 처리 | `Idempotency-Key` 기반 재시도 정책으로 확장 |
+| 관측 가능성 | 병목 지표를 체계적으로 수집/시각화하지 않음 | Actuator/Micrometer/Prometheus 대시보드 구성(TPS, lock wait, DB pool, Redis latency) |
+| 발급 파이프라인 | 동기 처리 중심이라 장애 전파 범위가 큼 | RabbitMQ 기반 비동기 처리 + 재처리/보상 전략 설계 |
