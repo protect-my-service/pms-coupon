@@ -5,6 +5,7 @@ import com.pms.coupon.common.exception.ResponseCode;
 import com.pms.coupon.common.utils.DateUtils;
 import com.pms.coupon.domain.coupon.dto.CouponCreateRequest;
 import com.pms.coupon.domain.coupon.dto.CouponCreateResponse;
+import com.pms.coupon.domain.coupon.dto.CouponListResponse;
 import com.pms.coupon.domain.coupon.entity.Coupon;
 import com.pms.coupon.domain.coupon.event.CouponCreatedEvent;
 import com.pms.coupon.domain.coupon.repository.CouponRepository;
@@ -12,6 +13,10 @@ import com.pms.coupon.domain.member.repository.MemberRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,5 +72,28 @@ public class CouponService {
             .issueEndDate(coupon.getIssueEndDate())
             .createdAt(coupon.getCreatedAt())
             .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CouponListResponse> getCoupons(int page, int size) {
+        Pageable pageable = PageRequest.of(
+            page,
+            size,
+            Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+            )
+        );
+        Page<Coupon> resultPage = couponRepository.findAll(pageable);
+
+        return resultPage.map(coupon -> CouponListResponse.builder()
+            .couponId(coupon.getId())
+            .name(coupon.getName())
+            .totalQuantity(coupon.getTotalQuantity())
+            .issuedQuantity(coupon.getIssuedQuantity())
+            .issueStartDate(coupon.getIssueStartDate())
+            .issueEndDate(coupon.getIssueEndDate())
+            .createdAt(coupon.getCreatedAt())
+            .build());
     }
 }

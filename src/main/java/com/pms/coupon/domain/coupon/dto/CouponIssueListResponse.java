@@ -2,19 +2,16 @@ package com.pms.coupon.domain.coupon.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
-
-import com.pms.coupon.common.enums.CouponIssueStatus;
-
 import lombok.Builder;
 
 @Builder
-public record CouponIssueResponse(
+public record CouponIssueListResponse(
+
+    Long couponIssueId,
 
     Long couponId,
 
     Long memberId,
-
-    CouponIssueStatus status,
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime issuedDate

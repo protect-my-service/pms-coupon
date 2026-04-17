@@ -3,6 +3,7 @@ package com.pms.coupon.domain.coupon.service;
 import com.pms.coupon.common.exception.BusinessCustomException;
 import com.pms.coupon.common.exception.ResponseCode;
 import com.pms.coupon.common.enums.MemberRequestAcquireResult;
+import com.pms.coupon.domain.coupon.dto.CouponIssueListResponse;
 import com.pms.coupon.domain.coupon.dto.CouponIssueResponse;
 import com.pms.coupon.common.enums.CouponIssueStatus;
 import com.pms.coupon.domain.coupon.entity.Coupon;
@@ -14,7 +15,12 @@ import com.pms.coupon.domain.member.repository.MemberRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -162,5 +168,25 @@ public class CouponIssueService {
             .status(CouponIssueStatus.SUCCESS)
             .issuedDate(existingIssue.getIssuedDate())
             .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CouponIssueListResponse> getCouponIssues(int page, int size) {
+        Pageable pageable = PageRequest.of(
+            page,
+            size,
+            Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+            )
+        );
+        Page<CouponIssue> resultPage = couponIssueRepository.findAll(pageable);
+
+        return resultPage.map(couponIssue -> CouponIssueListResponse.builder()
+            .couponIssueId(couponIssue.getId())
+            .couponId(couponIssue.getCouponId())
+            .memberId(couponIssue.getMemberId())
+            .issuedDate(couponIssue.getIssuedDate())
+            .build());
     }
 }

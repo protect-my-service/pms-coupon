@@ -34,23 +34,27 @@ public class CouponIssue {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime issuedDate;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    private CouponIssue(Long couponId, Long memberId, LocalDateTime issuedDate) {
+    private CouponIssue(Long couponId, Long memberId, LocalDateTime createdAt) {
         this.couponId = couponId;
         this.memberId = memberId;
-        this.issuedDate = issuedDate;
+        this.createdAt = createdAt;
     }
 
-    public static CouponIssue create(Long couponId, Long memberId, LocalDateTime issuedDate) {
-        return new CouponIssue(couponId, memberId, issuedDate);
+    public static CouponIssue create(Long couponId, Long memberId, LocalDateTime createdAt) {
+        return new CouponIssue(couponId, memberId, createdAt);
     }
 
     @PrePersist
     protected void onCreate() {
-        if (issuedDate == null) {
-            this.issuedDate = LocalDateTime.now();
+        if (createdAt == null) {
+            this.createdAt = LocalDateTime.now();
         }
+    }
+
+    public LocalDateTime getIssuedDate() {
+        return this.createdAt;
     }
 }

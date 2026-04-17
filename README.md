@@ -7,6 +7,7 @@
 - [1. 기술 스택](#1-기술-스택)
 - [2. 실행 방법](#2-실행-방법)
 - [3. 핵심 도메인 및 API](#3-핵심-도메인-및-api)
+  - [3.3 API 호출 예시 (curl)](#33-api-호출-예시-curl)
 - [4. 동시성 제어 요약](#4-동시성-제어-요약)
 - [5. 테스트](#5-테스트)
 - [6. 한계점 및 보강 포인트](#6-한계점-및-보강-포인트)
@@ -72,13 +73,60 @@ java -jar build/libs/*.jar
 
 | Method | Endpoint | 설명 |
 |---|---|---|
+| `GET` | `/members` | 회원 목록 조회 |
+| `GET` | `/members/{id}/coupon-issues` | 특정 회원 쿠폰 발급 이력 조회 |
 | `POST` | `/members` | 회원 등록 |
+| `GET` | `/coupons` | 쿠폰 목록 조회 |
 | `POST` | `/coupons` | 쿠폰 생성 |
+| `GET` | `/coupons/issues` | 쿠폰 발급 이력 목록 조회 |
 | `POST` | `/coupons/{id}/issue` | 쿠폰 발급 |
 
 요청 헤더: `X-Member-Id` (쿠폰 생성/발급 API 공통)
 
+목록 조회 API 공통 쿼리 파라미터:
+- `page` (기본값 `0`)
+- `size` (기본값 `10`, 최대 `100`)
+
 응답은 공통 응답 래퍼(`CommonResponse`)를 통해 내려갑니다.
+
+### 3.3 API 호출 예시 (curl)
+
+```bash
+# 공통
+BASE_URL=http://localhost:8080
+
+# 1) 회원 등록
+curl -X POST "$BASE_URL/members" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"sora"}'
+
+# 2) 회원 목록 조회
+curl "$BASE_URL/members?page=0&size=10"
+
+# 2-1) 특정 회원의 쿠폰 발급 이력 조회
+curl "$BASE_URL/members/1/coupon-issues?page=0&size=10"
+
+# 3) 쿠폰 생성 (X-Member-Id 필요)
+curl -X POST "$BASE_URL/coupons" \
+  -H "Content-Type: application/json" \
+  -H "X-Member-Id: 1" \
+  -d '{
+    "name":"5월 할인 쿠폰",
+    "totalQuantity":100,
+    "issueStartDate":"2026-04-18",
+    "issueEndDate":"2026-04-20"
+  }'
+
+# 4) 쿠폰 목록 조회
+curl "$BASE_URL/coupons?page=0&size=10"
+
+# 5) 쿠폰 발급 (X-Member-Id 필요)
+curl -X POST "$BASE_URL/coupons/1/issue" \
+  -H "X-Member-Id: 1"
+
+# 6) 쿠폰 발급 이력 목록 조회
+curl "$BASE_URL/coupons/issues?page=0&size=10"
+```
 
 <br>
 

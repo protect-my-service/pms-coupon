@@ -2,8 +2,10 @@ package com.pms.coupon.domain.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
+import lombok.Builder;
 
-public record MemberCreateResponse(
+@Builder
+public record MemberListResponse(
 
     Long memberId,
 

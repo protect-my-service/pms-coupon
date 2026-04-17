@@ -5,13 +5,15 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Builder
-public record CouponCreateResponse(
+public record CouponListResponse(
 
     Long couponId,
 
     String name,
 
     int totalQuantity,
+
+    int issuedQuantity,
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     LocalDateTime issueStartDate,

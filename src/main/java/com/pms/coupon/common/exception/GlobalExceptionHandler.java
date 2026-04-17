@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError == null ? ResponseCode.INVALID_REQUEST.getMessage() : fieldError.getDefaultMessage();
         return ResponseEntity.badRequest()
-            .body(new CommonResponse<>(message, null));
+            .body(new CommonResponse<>(message, null, null));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
             .map(violation -> violation.getMessage())
             .orElse(ResponseCode.INVALID_REQUEST.getMessage());
         return ResponseEntity.badRequest()
-            .body(new CommonResponse<>(message, null));
+            .body(new CommonResponse<>(message, null, null));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
             .map(error -> error.getDefaultMessage())
             .orElse(ResponseCode.INVALID_REQUEST.getMessage());
         return ResponseEntity.badRequest()
-            .body(new CommonResponse<>(message, null));
+            .body(new CommonResponse<>(message, null, null));
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
