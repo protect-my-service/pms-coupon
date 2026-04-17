@@ -25,7 +25,7 @@ public class CouponRedisSyncListener {
                 return;
             }
 
-            couponIssueRedisService.initializeCouponKeys(event.couponId(), event.totalQuantity(), ttl);
+            couponIssueRedisService.initializeCouponKeys(event.couponId(), 0, ttl);
         } catch (Exception e) {
             log.error(
                 "Failed to initialize coupon redis keys after commit. couponId={}, totalQuantity={}, issueEndDate={}",

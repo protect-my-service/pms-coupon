@@ -39,6 +39,7 @@ public class CouponController {
     }
 
     @PostMapping("/{id}/issue")
+    @ResponseStatus(HttpStatus.OK)
     public CommonResponse<CouponIssueResponse> issue(
         @RequestHeader("X-Member-Id") Long memberId,
         @PathVariable long id

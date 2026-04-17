@@ -23,24 +23,36 @@ public class CouponService {
     private final MemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 쿠폰 생성
+     * - 생성 후 Redis 초기화를 위한 이벤트 발행
+     */
     @Transactional
     public CouponCreateResponse create(Long memberId, CouponCreateRequest request) {
+
+        // 1. 회원 존재 여부 검증
         if (!memberRepository.existsById(memberId)) {
             throw new BusinessCustomException(ResponseCode.MEMBER_NOT_FOUND);
         }
 
+        // 2. 쿠폰 이름 및 수량 추출
         String couponName = request.name().trim();
         int totalQuantity = request.totalQuantity();
 
+        // 3. 발급 기간 시작/종료 시간 보정 (00:00:00 ~ 23:59:59)
         LocalDateTime issueStartDate = DateUtils.toStartOfDay(request.issueStartDate());
         LocalDateTime issueEndDate = DateUtils.toEndOfDay(request.issueEndDate());
+
+        // 4. 발급 기간 유효성 검증
         if (!DateUtils.isValidDateRange(issueStartDate, issueEndDate)) {
             throw new BusinessCustomException(ResponseCode.COUPON_ISSUE_PERIOD_INVALID_ON_CREATE);
         }
 
+        // 5. 쿠폰 생성 및 저장
         Coupon newCoupon = Coupon.create(couponName, totalQuantity, issueStartDate, issueEndDate);
         Coupon coupon = couponRepository.save(newCoupon);
 
+        // 6. 쿠폰 생성 이벤트 발행
         eventPublisher.publishEvent(new CouponCreatedEvent(
             coupon.getId(),
             coupon.getTotalQuantity(),

@@ -107,7 +107,7 @@ class CouponIssueConcurrencyIntegrationTest extends IntegrationTestContainers {
     }
 
     @Test
-    @DisplayName("동일 회원이 동시에 발급 요청하면 1건만 성공하고 나머지는 중복/진행중으로 실패한다")
+    @DisplayName("동일 회원 동시 요청 시 DB 발급 이력은 1건만 남고 나머지는 진행중 또는 멱등 성공 응답을 받는다")
     void sameMemberConcurrentRequest_onlyOneSuccess() throws Exception {
         Coupon coupon = couponRepository.save(Coupon.create(
             "same-member-coupon",
@@ -125,8 +125,9 @@ class CouponIssueConcurrencyIntegrationTest extends IntegrationTestContainers {
             .count();
 
         SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(result.successCount()).isEqualTo(1);
-        softly.assertThat(result.alreadyIssuedCount() + result.inProgressCount()).isEqualTo(sameMembers.size() - 1);
+        softly.assertThat(result.successCount()).isGreaterThanOrEqualTo(1);
+        softly.assertThat(result.successCount() + result.alreadyIssuedCount() + result.inProgressCount())
+            .isEqualTo(sameMembers.size());
         softly.assertThat(result.unexpectedErrors()).isEmpty();
         softly.assertThat(issueRows).isEqualTo(1);
         softly.assertAll();

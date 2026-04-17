@@ -1,4 +1,4 @@
-package com.pms.coupon.domain.coupon.dto;
+package com.pms.coupon.common.enums;
 
 public enum CouponIssueStatus {
     SUCCESS

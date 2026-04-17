@@ -86,8 +86,8 @@ java -jar build/libs/*.jar
 
 - Redis로 1차 선검증 후 DB로 최종 확정하는 구조입니다.
 - Redis
-  - `coupon:limit:{couponId}`: 발급 제한 수량
-  - `coupon:req-count:{couponId}`: 요청 카운트
+  - `coupon:requested-count:{couponId}`: 발급 요청(선점) 수량
+  - `coupon:issued-count:{couponId}`: 실제 발급 확정 수량
   - `coupon:req:{couponId}:{memberId}`: 유저별 요청 상태
 - DB
   - 쿠폰 row `PESSIMISTIC_WRITE` 락
@@ -95,7 +95,9 @@ java -jar build/libs/*.jar
 
 ### 4.2 핵심 포인트
 
-- 선착순 요청은 Redis `INCR/DECR`로 빠르게 필터링
+- `requested-count`를 먼저 `INCR`하여 동시 요청 경합을 빠르게 차단
+- `requested-count > coupon.totalQuantity`이면 즉시 `DECR` 보상 후 실패 처리
+- DB 확정 성공 건에 대해서만 `issued-count`를 증가시켜 실제 발급 수량을 관리
 - 최종 정합성은 PostgreSQL 트랜잭션에서 보장
 - 실패 시 Redis 카운트 보상 및 요청 키 정리
 - Redis 키 초기화는 쿠폰 생성 커밋 이후(`AFTER_COMMIT`) 처리

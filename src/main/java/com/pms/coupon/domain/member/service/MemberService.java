@@ -16,6 +16,11 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    /**
+     * 회원 등록
+     * @param request
+     * @return
+     */
     @Transactional
     public MemberCreateResponse create(MemberCreateRequest request) {
         if (request.name() == null || request.name().trim().isEmpty()) {
