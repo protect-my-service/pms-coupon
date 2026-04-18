@@ -17,6 +17,7 @@ public class CouponRedisSyncListener {
 
     private final CouponIssueRedisService couponIssueRedisService;
 
+    // TODO: AFTER_COMMIT 단계에서 실패하면 DB 롤백이 불가능하며 실패 로그만 남고 자동 복구 수단이 없음.
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onCouponCreated(CouponCreatedEvent event) {
         try {

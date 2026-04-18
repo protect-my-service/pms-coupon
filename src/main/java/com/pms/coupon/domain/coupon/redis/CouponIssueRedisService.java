@@ -28,6 +28,7 @@ public class CouponIssueRedisService {
      * - requestedCount: 요청 수
      * - issuedCount: 실제 발급 수
      */
+    // TODO: setIfAbsent 를 두 번 호출하므로 두 키 중 하나만 존재하는 부분 초기화 상태가 발생할 수 있음.
     public void initializeCouponKeys(Long couponId, long initialIssuedCount, Duration ttl) {
         redisTemplate.opsForValue()
             .setIfAbsent(requestedCountKey(couponId), String.valueOf(initialIssuedCount), ttl);

@@ -32,11 +32,11 @@ public class CouponIssueService {
     private final CouponIssueTxService couponIssueTxService;
     private final MemberRepository memberRepository;
 
+    // TODO: 수량 제한 없이 사용자당 1장만 발급 가능한 다운로드형 쿠폰 타입 추가 필요.
+    // TODO: 발급된 쿠폰을 사용 상태로 전이시키는 쿠폰 사용 API 추가 필요.
+
     /**
      * 쿠폰 발급
-     * @param couponId
-     * @param memberId
-     * @return
      */
     public CouponIssueResponse issue(Long couponId, Long memberId) {
         LocalDateTime now = LocalDateTime.now();
@@ -95,6 +95,7 @@ public class CouponIssueService {
             // rollback 기준점 플래그
             issuePersisted = true;
 
+            // TODO: 이 지점 이후 Redis 호출이 실패해도 DB 상태를 되돌리는 보상 로직이 없음.
             // 10. 성공 시 실제 발급 수량 증가 + 사용자 상태 DONE 처리
             couponIssueRedisService.increaseIssuedCount(couponId);
             couponIssueRedisService.markMemberRequestDone(couponId, memberId, ttl);
